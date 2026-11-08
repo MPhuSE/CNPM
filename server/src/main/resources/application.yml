@@ -1,0 +1,50 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: flowops-server
+  profiles:
+    active: dev
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flowops}
+    username: ${SPRING_DATASOURCE_USERNAME:flowops}
+    password: ${SPRING_DATASOURCE_PASSWORD:flowops}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+flowops:
+  jwt:
+    secret: ${FLOWOPS_JWT_SECRET:4c9b20b784a9231f822bca6df9d1b091f0a51c4a259c6c73919da2185c6df9b1}
+    access-token-expiration-ms: 900000 # 15 minutes
+    refresh-token-expiration-ms: 604800000 # 7 days
+  cors:
+    allowed-origins: ${FLOWOPS_CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+  scheduler:
+    sla-check-enabled: true
+    cron: "0 * * * * *" # Every minute
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized

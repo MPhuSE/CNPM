@@ -1,0 +1,29 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Dependencies & Build outputs
+node_modules/
+dist/
+client/dist/
+client/node_modules/
+
+target/
+server/target/
+*.class
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.log
+
+# IDE & Editors
+.idea/
+.vscode/
+*.iml
+.project
+.settings/
+.classpath
