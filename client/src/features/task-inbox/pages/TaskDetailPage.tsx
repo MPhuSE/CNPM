@@ -46,7 +46,13 @@ export const TaskDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['task-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['task-inbox'] });
     },
-    onError: (err: any) => setActionError(err?.message || 'Không thể nhận tác vụ'),
+    onError: (err: any) => {
+      if (err?.status === 409 || err?.code === 'CONCURRENCY_CONFLICT') {
+        setActionError('Xung đột dữ liệu: Nhiệm vụ đã được người khác xử lý hoặc nội dung hồ sơ vừa được cập nhật. Vui lòng tải lại trang.');
+      } else {
+        setActionError(err?.message || 'Không thể nhận tác vụ');
+      }
+    },
   });
 
   const decisionMutation = useMutation({
@@ -68,7 +74,13 @@ export const TaskDetailPage: React.FC = () => {
       setDecisionModalOpen(false);
       navigate('/inbox');
     },
-    onError: (err: any) => setActionError(err?.message || 'Không thể thực hiện quyết định'),
+    onError: (err: any) => {
+      if (err?.status === 409 || err?.code === 'CONCURRENCY_CONFLICT') {
+        setActionError('Xung đột dữ liệu: Quyết định không thể thực hiện vì nhiệm vụ đã có thay đổi mới từ người khác. Vui lòng tải lại trang.');
+      } else {
+        setActionError(err?.message || 'Không thể thực hiện quyết định');
+      }
+    },
   });
 
   if (isLoading || !task) {
@@ -148,6 +160,12 @@ export const TaskDetailPage: React.FC = () => {
       {actionError && (
         <Alert variant="error" className="mb-4">
           {actionError}
+        </Alert>
+      )}
+
+      {task.assignmentState === 'NEEDS_ASSIGNMENT' && (
+        <Alert variant="warning" className="mb-4">
+          Nhiệm vụ này đang ở trạng thái <strong>Cần phân công</strong> (chưa có người duyệt hợp lệ hoặc phòng ban chưa có quản lý). Quản trị viên cần phân công lại tại màn hình Điều phối trước khi có thể phê duyệt.
         </Alert>
       )}
 
