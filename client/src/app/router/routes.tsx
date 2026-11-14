@@ -1,6 +1,6 @@
-import React from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layout/MainLayout';
+import { ProtectedRoute } from './ProtectedRoute';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { MyRequestsPage } from '@/features/my-requests/pages/MyRequestsPage';
 import { CreateRequestPage } from '@/features/my-requests/pages/CreateRequestPage';
@@ -21,64 +21,51 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
-    path: '/',
-    element: <MainLayout />,
+    element: <ProtectedRoute />,
     children: [
       {
-        index: true,
-        element: <Navigate to="/my-requests" replace />,
-      },
-      // Employee zone
-      {
-        path: 'my-requests',
-        element: <MyRequestsPage />,
-      },
-      {
-        path: 'my-requests/new',
-        element: <CreateRequestPage />,
-      },
-      {
-        path: 'my-requests/:id',
-        element: <RequestDetailPage />,
-      },
-      // Approver zone
-      {
-        path: 'inbox',
-        element: <TaskInboxPage />,
-      },
-      {
-        path: 'inbox/:id',
-        element: <TaskDetailPage />,
-      },
-      // Admin zone
-      {
-        path: 'dashboard',
-        element: <DashboardPage />,
-      },
-      {
-        path: 'coordination',
-        element: <CoordinationPage />,
-      },
-      {
-        path: 'workflows',
-        element: <WorkflowListPage />,
-      },
-      {
-        path: 'workflows/:id',
-        element: <WorkflowEditorPage />,
-      },
-      {
-        path: 'organization',
-        element: <OrganizationPage />,
-      },
-      {
-        path: 'audit',
-        element: <AuditLogsPage />,
-      },
-      // Common
-      {
-        path: 'notifications',
-        element: <NotificationsPage />,
+        path: '/',
+        element: <MainLayout />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/my-requests" replace />,
+          },
+          // Employee zone
+          {
+            element: <ProtectedRoute allowedRoles={['Employee', 'Approver', 'Admin']} />,
+            children: [
+              { path: 'my-requests', element: <MyRequestsPage /> },
+              { path: 'my-requests/new', element: <CreateRequestPage /> },
+              { path: 'my-requests/:id', element: <RequestDetailPage /> },
+            ],
+          },
+          // Approver zone
+          {
+            element: <ProtectedRoute allowedRoles={['Approver', 'Admin']} />,
+            children: [
+              { path: 'inbox', element: <TaskInboxPage /> },
+              { path: 'inbox/:id', element: <TaskDetailPage /> },
+            ],
+          },
+          // Admin zone
+          {
+            element: <ProtectedRoute allowedRoles={['Admin']} />,
+            children: [
+              { path: 'dashboard', element: <DashboardPage /> },
+              { path: 'coordination', element: <CoordinationPage /> },
+              { path: 'workflows', element: <WorkflowListPage /> },
+              { path: 'workflows/:id', element: <WorkflowEditorPage /> },
+              { path: 'organization', element: <OrganizationPage /> },
+              { path: 'audit', element: <AuditLogsPage /> },
+            ],
+          },
+          // Common
+          {
+            path: 'notifications',
+            element: <NotificationsPage />,
+          },
+        ],
       },
     ],
   },
