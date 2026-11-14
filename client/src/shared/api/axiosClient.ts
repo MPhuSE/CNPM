@@ -1,50 +1,117 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-export const axiosClient = axios.create({
-  baseURL: 'http://localhost:8080/api', // Thay đổi port nếu backend nhóm chạy cổng khác
+// 1. Quản lý Token trong bộ nhớ (Memory Token) thay vì localStorage để bảo mật
+let memoryAccessToken: string | null = null;
+
+export const setMemoryAccessToken = (token: string | null) => {
+  memoryAccessToken = token;
+};
+
+export const getMemoryAccessToken = () => {
+  return memoryAccessToken;
+};
+
+// Tạo axios instance
+const axiosClient = axios.create({
+  baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true,
 });
 
-// Interceptor tự động đính kèm Access Token vào request
+// 2. Interceptor cho Request: Đính kèm Access Token từ bộ nhớ
 axiosClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  (config: InternalAxiosRequestConfig) => {
+    if (memoryAccessToken && config.headers) {
+      config.headers.Authorization = `Bearer ${memoryAccessToken}`;
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Interceptor xử lý làm mới token (Refresh Token) khi hết hạn (401)
+// Biến hỗ trợ cơ chế Refresh Token đồng thời (Pending Refresh Promise / Queue)
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
+
+// 3. Interceptor cho Response: Xử lý 401, 403 và Refresh Token
 axiosClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
-    if (error.response?.status === 401 && !originalRequest._retry) {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    if (!error.response) {
+      return Promise.reject(error);
+    }
+
+    const status = error.response.status;
+
+    // Xử lý lỗi 403 (Forbidden)
+    if (status === 403) {
+      console.warn('Truy cập bị từ chối (403): Bạn không có quyền thực hiện hành động này.');
+    }
+
+    // Xử lý lỗi 401 (Unauthorized - Hết hạn token)
+    if (status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            return axiosClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        const res = await axios.post('http://localhost:8080/api/auth/refresh', {
-          refreshToken,
-        });
+        const response = await axios.post('/api/v1/auth/refresh-token', {}, { withCredentials: true });
+        const newAccessToken = response.data.accessToken || response.data.token;
 
-        const { accessToken } = res.data;
-        localStorage.setItem('access_token', accessToken);
+        setMemoryAccessToken(newAccessToken);
+        processQueue(null, newAccessToken);
 
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
         return axiosClient(originalRequest);
       } catch (refreshError) {
+        processQueue(refreshError, null);
+        setMemoryAccessToken(null);
+        
+        // Xóa sạch query cache / bộ nhớ đệm khi phiên bị thu hồi
         localStorage.clear();
+        sessionStorage.clear();
+
         window.location.href = '/login';
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   }
 );
+
+export default axiosClient;
