@@ -14,11 +14,17 @@ import { OrganizationPage } from '@/features/organization/pages/OrganizationPage
 import { AuditLogsPage } from '@/features/audit/pages/AuditLogsPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { NotificationsPage } from '@/features/notifications/pages/NotificationsPage';
+import { RoleGuard } from '@/shared/guards/RoleGuard';
+import { ForbiddenPage } from '@/shared/pages/ForbiddenPage';
 
 export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/403',
+    element: <ForbiddenPage />,
   },
   {
     path: '/',
@@ -50,30 +56,54 @@ export const router = createBrowserRouter([
         path: 'inbox/:id',
         element: <TaskDetailPage />,
       },
-      // Admin zone
+      // Admin zone - Được bảo vệ nghiêm ngặt bằng RoleGuard (Admin only)
       {
         path: 'dashboard',
-        element: <DashboardPage />,
+        element: (
+          <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+            <DashboardPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'coordination',
-        element: <CoordinationPage />,
+        element: (
+          <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+            <CoordinationPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'workflows',
-        element: <WorkflowListPage />,
+        element: (
+          <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+            <WorkflowListPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'workflows/:id',
-        element: <WorkflowEditorPage />,
+        element: (
+          <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+            <WorkflowEditorPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'organization',
-        element: <OrganizationPage />,
+        element: (
+          <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+            <OrganizationPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'audit',
-        element: <AuditLogsPage />,
+        element: (
+          <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+            <AuditLogsPage />
+          </RoleGuard>
+        ),
       },
       // Common
       {

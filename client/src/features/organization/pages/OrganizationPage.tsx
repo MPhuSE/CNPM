@@ -1,193 +1,116 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/shared/api/client';
-import { ENDPOINTS } from '@/shared/api/endpoints';
+import { organizationApi } from '../services/organizationApi';
+import { UserList } from '../components/UserList';
+import { DepartmentManager } from '../components/DepartmentManager';
+import { ApprovalGroupEditor } from '../components/ApprovalGroupEditor';
 import { Card } from '@/shared/ui/Card';
-import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/shared/ui/Table';
-import { Badge } from '@/shared/ui/Badge';
-import { LoadingSpinner } from '@/shared/ui/LoadingSpinner';
-import { Users, Building, Shield } from 'lucide-react';
+import { Users, Building, Shield, UserCheck, FolderTree } from 'lucide-react';
 
 export const OrganizationPage: React.FC = () => {
   const [tab, setTab] = useState<'users' | 'departments' | 'groups'>('users');
 
-  const { data: users, isLoading: loadingUsers } = useQuery({
-    queryKey: ['org-users'],
-    queryFn: () => apiClient<any>(ENDPOINTS.USERS),
-    enabled: tab === 'users',
+  // Pre-fetch departments and users to supply to sub-components (for dropdowns, manager selection, etc.)
+  const { data: deptsData } = useQuery({
+    queryKey: ['departments-all-dropdown'],
+    queryFn: () => organizationApi.getDepartments({ page: 0, size: 100 }),
   });
 
-  const { data: departments, isLoading: loadingDepts } = useQuery({
-    queryKey: ['org-departments'],
-    queryFn: () => apiClient<any>(ENDPOINTS.DEPARTMENTS),
-    enabled: tab === 'departments',
+  const { data: usersData } = useQuery({
+    queryKey: ['users-all-dropdown'],
+    queryFn: () => organizationApi.getUsers({ page: 0, size: 100 }),
   });
 
-  const { data: groups, isLoading: loadingGroups } = useQuery({
-    queryKey: ['org-groups'],
-    queryFn: () => apiClient<any>(ENDPOINTS.APPROVAL_GROUPS),
-    enabled: tab === 'groups',
-  });
+  const departments = deptsData?.items || [];
+  const users = usersData?.items || [];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Quản trị Tổ chức &amp; Phân quyền</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Quản lý tài khoản, phòng ban và các nhóm phê duyệt độc lập (Finance, Accounting, IT)
-        </p>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản trị Tài khoản &amp; Tổ chức
+            </h1>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+              FR02–03 • Admin Only
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Quản trị người dùng, gán 3 vai trò hệ thống, cơ cấu phòng ban và quản lý các nhóm phê duyệt độc lập (Finance, Accounting, IT).
+          </p>
+        </div>
+
+        {/* Quick summary stats */}
+        <div className="flex items-center gap-3">
+          <div className="bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-sm flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-[11px] text-gray-400 uppercase font-medium">Người dùng</div>
+              <div className="text-base font-bold text-gray-900">{usersData?.total ?? users.length}</div>
+            </div>
+          </div>
+
+          <div className="bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-sm flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Building className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-[11px] text-gray-400 uppercase font-medium">Phòng ban</div>
+              <div className="text-base font-bold text-gray-900">{deptsData?.total ?? departments.length}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex border-b border-gray-200">
+      {/* Tabs navigation */}
+      <div className="flex border-b border-gray-200 gap-2">
         <button
           onClick={() => setTab('users')}
-          className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2 py-3 px-5 text-sm font-semibold border-b-2 transition-all ${
             tab === 'users'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30 rounded-t-lg'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
-          <Users className="w-4 h-4" />
-          Người dùng &amp; Vai trò
+          <UserCheck className="w-4 h-4" />
+          <span>Người dùng &amp; 3 Vai trò</span>
         </button>
 
         <button
           onClick={() => setTab('departments')}
-          className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2 py-3 px-5 text-sm font-semibold border-b-2 transition-all ${
             tab === 'departments'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30 rounded-t-lg'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
-          <Building className="w-4 h-4" />
-          Phòng ban
+          <FolderTree className="w-4 h-4" />
+          <span>Phòng ban &amp; Trưởng bộ phận</span>
         </button>
 
         <button
           onClick={() => setTab('groups')}
-          className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2 py-3 px-5 text-sm font-semibold border-b-2 transition-all ${
             tab === 'groups'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30 rounded-t-lg'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
           <Shield className="w-4 h-4" />
-          Nhóm phê duyệt
+          <span>Nhóm phê duyệt độc lập</span>
         </button>
       </div>
 
-      <Card>
-        {tab === 'users' && (
-          loadingUsers ? (
-            <LoadingSpinner label="Đang tải danh sách người dùng..." />
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Tài khoản</TableHeaderCell>
-                  <TableHeaderCell>Họ và tên</TableHeaderCell>
-                  <TableHeaderCell>Email</TableHeaderCell>
-                  <TableHeaderCell>Phòng ban</TableHeaderCell>
-                  <TableHeaderCell>Vai trò (Roles)</TableHeaderCell>
-                  <TableHeaderCell>Trạng thái</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {users?.items?.map((u: any) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-mono text-xs font-semibold text-gray-800">
-                      @{u.username}
-                    </TableCell>
-                    <TableCell className="font-medium text-gray-900">{u.fullName}</TableCell>
-                    <TableCell className="text-xs text-gray-600">{u.email}</TableCell>
-                    <TableCell className="text-xs">{u.departmentName || '—'}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {u.roles?.map((r: string) => (
-                          <Badge
-                            key={r}
-                            size="sm"
-                            color={r === 'ROLE_ADMIN' ? 'rose' : r === 'ROLE_APPROVER' ? 'indigo' : 'blue'}
-                          >
-                            {r.replace('ROLE_', '')}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge color={u.isActive ? 'emerald' : 'gray'}>
-                        {u.isActive ? 'Active' : 'Locked'}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )
-        )}
-
-        {tab === 'departments' && (
-          loadingDepts ? (
-            <LoadingSpinner label="Đang tải danh sách phòng ban..." />
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Mã phòng ban</TableHeaderCell>
-                  <TableHeaderCell>Tên phòng ban</TableHeaderCell>
-                  <TableHeaderCell>Trưởng bộ phận</TableHeaderCell>
-                  <TableHeaderCell>Trạng thái</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {departments?.items?.map((d: any) => (
-                  <TableRow key={d.id}>
-                    <TableCell className="font-mono text-xs font-semibold">{d.code}</TableCell>
-                    <TableCell className="font-medium text-gray-900">{d.name}</TableCell>
-                    <TableCell className="text-xs text-gray-700">{d.managerName || '—'}</TableCell>
-                    <TableCell>
-                      <Badge color={d.isActive ? 'emerald' : 'gray'}>
-                        {d.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )
-        )}
-
-        {tab === 'groups' && (
-          loadingGroups ? (
-            <LoadingSpinner label="Đang tải danh sách nhóm duyệt..." />
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Mã nhóm</TableHeaderCell>
-                  <TableHeaderCell>Tên nhóm</TableHeaderCell>
-                  <TableHeaderCell>Số thành viên</TableHeaderCell>
-                  <TableHeaderCell>Trạng thái</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {groups?.items?.map((g: any) => (
-                  <TableRow key={g.id}>
-                    <TableCell className="font-mono text-xs font-semibold">{g.code}</TableCell>
-                    <TableCell className="font-medium text-gray-900">{g.name}</TableCell>
-                    <TableCell className="text-xs">{g.memberCount || 0} thành viên</TableCell>
-                    <TableCell>
-                      <Badge color={g.isActive ? 'emerald' : 'gray'}>
-                        {g.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )
-        )}
-      </Card>
+      {/* Active Tab Content */}
+      <div className="mt-4">
+        {tab === 'users' && <UserList departments={departments} />}
+        {tab === 'departments' && <DepartmentManager availableUsers={users} />}
+        {tab === 'groups' && <ApprovalGroupEditor availableUsers={users} />}
+      </div>
     </div>
   );
 };
