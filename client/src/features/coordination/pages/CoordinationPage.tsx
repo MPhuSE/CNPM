@@ -99,14 +99,12 @@ export const CoordinationPage: React.FC = () => {
             <TableBody>
               {needsAssignmentTasks.items.map((t: any) => (
                 <TableRow key={t.id}>
-                  <TableCell className="font-mono text-xs">{t.requestCode || '—'}</TableCell>
-                  <TableCell className="font-medium text-gray-900">{t.requestTitle}</TableCell>
-                  <TableCell>
-                    <span className="text-xs bg-rose-50 text-rose-700 px-2 py-1 rounded font-medium">
-                      {t.stepName}
-                    </span>
+                  <TableCell className="font-mono text-xs font-semibold text-zinc-700">{t.requestCode || '—'}</TableCell>
+                  <TableCell className="font-semibold text-sm text-zinc-900">{t.requestTitle}</TableCell>
+                  <TableCell className="text-sm font-medium text-zinc-800">
+                    {t.stepName}
                   </TableCell>
-                  <TableCell className="text-xs text-gray-500">{formatDateTime(t.dueAt)}</TableCell>
+                  <TableCell className="text-sm text-zinc-600 tabular-nums">{formatDateTime(t.dueAt)}</TableCell>
                   <TableCell>
                     <Button
                       size="sm"
@@ -154,10 +152,10 @@ export const CoordinationPage: React.FC = () => {
             <TableBody>
               {incidents.items.map((inc: any) => (
                 <TableRow key={inc.id}>
-                  <TableCell className="font-semibold text-rose-700">{inc.incidentType}</TableCell>
-                  <TableCell className="font-mono text-xs text-gray-800">{inc.errorCode}</TableCell>
-                  <TableCell className="text-sm">#{inc.requestId}</TableCell>
-                  <TableCell className="text-xs text-gray-500">{formatDateTime(inc.openedAt)}</TableCell>
+                  <TableCell className="font-semibold text-sm text-rose-700">{inc.incidentType}</TableCell>
+                  <TableCell className="font-mono text-xs font-semibold text-zinc-700">{inc.errorCode}</TableCell>
+                  <TableCell className="text-sm font-medium text-zinc-900">#{inc.requestId}</TableCell>
+                  <TableCell className="text-sm text-zinc-600 tabular-nums">{formatDateTime(inc.openedAt)}</TableCell>
                   <TableCell>
                     <Badge color="rose">{inc.status}</Badge>
                   </TableCell>

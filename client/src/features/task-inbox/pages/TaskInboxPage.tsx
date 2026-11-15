@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { taskApi } from '../api/taskApi';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/shared/ui/Table';
 import { Badge } from '@/shared/ui/Badge';
-import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner';
 import { formatDateTime, getTaskStatusMeta } from '@/shared/utils/formatters';
 import { Clock, UserCheck, Users } from 'lucide-react';
 
 export const TaskInboxPage: React.FC = () => {
-  const [scope, setScope] = useState<'mine' | 'group'>('mine');
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const scope = searchParams.get('scope') === 'group' ? 'group' : 'mine';
   const [page, setPage] = useState(0);
 
   const { data, isLoading } = useQuery({
@@ -31,7 +32,7 @@ export const TaskInboxPage: React.FC = () => {
       <div className="flex border-b border-gray-200">
         <button
           onClick={() => {
-            setScope('mine');
+            setSearchParams({ scope: 'mine' });
             setPage(0);
           }}
           className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
@@ -46,7 +47,7 @@ export const TaskInboxPage: React.FC = () => {
 
         <button
           onClick={() => {
-            setScope('group');
+            setSearchParams({ scope: 'group' });
             setPage(0);
           }}
           className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
@@ -75,37 +76,49 @@ export const TaskInboxPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableHeaderCell className="w-28">Mã hồ sơ</TableHeaderCell>
+                <TableHeaderCell className="w-32 whitespace-nowrap">Mã hồ sơ</TableHeaderCell>
                 <TableHeaderCell>Hồ sơ &amp; Quy trình</TableHeaderCell>
-                <TableHeaderCell className="w-36">Bước duyệt</TableHeaderCell>
-                <TableHeaderCell className="w-36">Người yêu cầu</TableHeaderCell>
-                <TableHeaderCell className="w-36">Hạn xử lý (SLA)</TableHeaderCell>
-                <TableHeaderCell className="w-28 text-center">Trạng thái</TableHeaderCell>
-                <TableHeaderCell className="w-20 text-center">Thao tác</TableHeaderCell>
+                <TableHeaderCell className="w-48 whitespace-nowrap">Bước duyệt</TableHeaderCell>
+                <TableHeaderCell className="w-44 whitespace-nowrap">Người yêu cầu</TableHeaderCell>
+                <TableHeaderCell className="w-44 whitespace-nowrap">Hạn xử lý (SLA)</TableHeaderCell>
+                <TableHeaderCell className="w-32 text-center whitespace-nowrap">Trạng thái</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {data.items.map((task) => {
                 const meta = getTaskStatusMeta(task.status, task.assignmentState);
                 return (
-                  <TableRow key={task.id}>
-                    <TableCell className="font-mono font-medium text-xs text-gray-800 whitespace-nowrap">
-                      {task.requestCode || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-gray-900 leading-snug">{task.requestTitle}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{task.workflowName} (Rev #{task.revisionNo})</div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium inline-block">
-                        {task.stepName}
+                  <TableRow
+                    key={task.id}
+                    onClick={() => navigate(`/inbox/${task.id}`, { state: { returnTo: `/inbox?scope=${scope}` } })}
+                    className="cursor-pointer hover:bg-zinc-50/80 transition-colors group"
+                    title="Bấm để xem chi tiết & phê duyệt"
+                  >
+                    <TableCell className="whitespace-nowrap">
+                      <span className="font-mono text-xs font-semibold text-zinc-700 group-hover:text-zinc-950 transition-colors">
+                        {task.requestCode || '—'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs text-gray-700">{task.requesterName}</TableCell>
-                    <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                    <TableCell>
+                      <div className="font-semibold text-sm text-zinc-900 group-hover:text-zinc-950 transition-colors leading-snug">
+                        {task.requestTitle}
+                      </div>
+                      <div className="text-xs text-zinc-500 mt-0.5 font-mono">
+                        {task.workflowName} (Rev #{task.revisionNo})
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm font-medium text-zinc-800 leading-snug">
+                        {task.stepName}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-zinc-700 whitespace-nowrap">
+                      {task.requesterName}
+                    </TableCell>
+                    <TableCell className="text-sm text-zinc-600 whitespace-nowrap tabular-nums">
                       {task.dueAt ? (
                         <div className="flex items-center gap-1.5">
-                          <Clock className={`w-3.5 h-3.5 flex-shrink-0 ${task.isOverdue ? 'text-rose-500' : 'text-gray-400'}`} />
+                          <Clock className={`w-3.5 h-3.5 flex-shrink-0 ${task.isOverdue ? 'text-rose-500' : 'text-zinc-400'}`} strokeWidth={1.75} />
                           <span className={task.isOverdue ? 'text-rose-600 font-semibold' : ''}>
                             {formatDateTime(task.dueAt)}
                           </span>
@@ -116,13 +129,6 @@ export const TaskInboxPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-center whitespace-nowrap">
                       <Badge color={meta.color}>{meta.label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Link to={`/inbox/${task.id}`}>
-                        <Button variant="outline" size="sm">
-                          Xử lý
-                        </Button>
-                      </Link>
                     </TableCell>
                   </TableRow>
                 );

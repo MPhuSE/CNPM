@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/taskApi';
 import { Card } from '@/shared/ui/Card';
@@ -11,17 +11,26 @@ import { Input } from '@/shared/ui/Input';
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner';
 import { formatDateTime, formatVND, getTaskStatusMeta } from '@/shared/utils/formatters';
 import { TaskAction } from '@/shared/types/task';
-import { Check, X, RotateCcw, Hand } from 'lucide-react';
+import { Check, X, RotateCcw, Hand, ArrowLeft } from 'lucide-react';
 
 export const TaskDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const [decisionModalOpen, setDecisionModalOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState<TaskAction | null>(null);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleBack = () => {
+    if (location.state?.returnTo) {
+      navigate(location.state.returnTo);
+    } else {
+      navigate(-1);
+    }
+  };
 
   const { data: task, isLoading } = useQuery({
     queryKey: ['task-detail', id],
@@ -72,7 +81,11 @@ export const TaskDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       setDecisionModalOpen(false);
-      navigate('/inbox');
+      if (location.state?.returnTo) {
+        navigate(location.state.returnTo);
+      } else {
+        navigate('/inbox');
+      }
     },
     onError: (err: any) => {
       if (err?.status === 409 || err?.code === 'CONCURRENCY_CONFLICT') {
@@ -263,6 +276,19 @@ export const TaskDetailPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Floating Back Button at Bottom Right */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-900 text-zinc-50 hover:bg-zinc-800 text-xs font-semibold rounded-full shadow-elevation border border-zinc-800 transition-all duration-150 active:scale-95 group select-none cursor-pointer"
+          title="Quay về trang trước"
+        >
+          <ArrowLeft className="w-4 h-4 text-zinc-300 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2} />
+          <span>Quay lại</span>
+        </button>
+      </div>
     </div>
   );
 };
