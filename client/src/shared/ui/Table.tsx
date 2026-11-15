@@ -7,8 +7,8 @@ export const Table: React.FC<React.TableHTMLAttributes<HTMLTableElement>> = ({
   ...props
 }) => {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-gray-200">
-      <table className={cn('min-w-full divide-y divide-gray-200 text-sm text-left', className)} {...props}>
+    <div className="w-full overflow-x-auto">
+      <table className={cn('w-full divide-y divide-gray-200 text-sm text-left', className)} {...props}>
         {children}
       </table>
     </div>
@@ -57,7 +57,7 @@ export const TableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> =
   ...props
 }) => {
   return (
-    <td className={cn('px-6 py-4 whitespace-nowrap text-gray-700', className)} {...props}>
+    <td className={cn('px-3.5 py-3 text-gray-700 text-sm align-middle', className)} {...props}>
       {children}
     </td>
   );
@@ -69,7 +69,7 @@ export const TableHeaderCell: React.FC<React.ThHTMLAttributes<HTMLTableCellEleme
   ...props
 }) => {
   return (
-    <th className={cn('px-6 py-3 font-semibold text-gray-600', className)} {...props}>
+    <th className={cn('px-3.5 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider', className)} {...props}>
       {children}
     </th>
   );

@@ -5,6 +5,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;
+  noPadding?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -12,6 +13,7 @@ export const Card: React.FC<CardProps> = ({
   title,
   subtitle,
   action,
+  noPadding = false,
   children,
   ...props
 }) => {
@@ -26,7 +28,7 @@ export const Card: React.FC<CardProps> = ({
           {action && <div>{action}</div>}
         </div>
       )}
-      <div className="p-6">{children}</div>
+      <div className={noPadding ? '' : 'p-6'}>{children}</div>
     </div>
   );
 };

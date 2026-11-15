@@ -60,9 +60,11 @@ export const TaskInboxPage: React.FC = () => {
         </button>
       </div>
 
-      <Card>
+      <Card noPadding>
         {isLoading ? (
-          <LoadingSpinner label="Đang tải danh sách tác vụ..." />
+          <div className="py-12">
+            <LoadingSpinner label="Đang tải danh sách tác vụ..." />
+          </div>
         ) : !data || data.items.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             {scope === 'mine'
@@ -73,13 +75,13 @@ export const TaskInboxPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>Mã hồ sơ</TableHeaderCell>
+                <TableHeaderCell className="w-28">Mã hồ sơ</TableHeaderCell>
                 <TableHeaderCell>Hồ sơ &amp; Quy trình</TableHeaderCell>
-                <TableHeaderCell>Bước duyệt</TableHeaderCell>
-                <TableHeaderCell>Người yêu cầu</TableHeaderCell>
-                <TableHeaderCell>Hạn xử lý (SLA)</TableHeaderCell>
-                <TableHeaderCell>Trạng thái</TableHeaderCell>
-                <TableHeaderCell>Thao tác</TableHeaderCell>
+                <TableHeaderCell className="w-36">Bước duyệt</TableHeaderCell>
+                <TableHeaderCell className="w-36">Người yêu cầu</TableHeaderCell>
+                <TableHeaderCell className="w-36">Hạn xử lý (SLA)</TableHeaderCell>
+                <TableHeaderCell className="w-28 text-center">Trạng thái</TableHeaderCell>
+                <TableHeaderCell className="w-20 text-center">Thao tác</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -87,23 +89,23 @@ export const TaskInboxPage: React.FC = () => {
                 const meta = getTaskStatusMeta(task.status, task.assignmentState);
                 return (
                   <TableRow key={task.id}>
-                    <TableCell className="font-mono font-medium text-xs text-gray-800">
+                    <TableCell className="font-mono font-medium text-xs text-gray-800 whitespace-nowrap">
                       {task.requestCode || '—'}
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-gray-900">{task.requestTitle}</div>
-                      <div className="text-xs text-gray-500">{task.workflowName} (Rev #{task.revisionNo})</div>
+                      <div className="font-medium text-gray-900 leading-snug">{task.requestTitle}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{task.workflowName} (Rev #{task.revisionNo})</div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-medium">
+                      <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium inline-block">
                         {task.stepName}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-700">{task.requesterName}</TableCell>
-                    <TableCell className="text-xs text-gray-600">
+                    <TableCell className="text-xs text-gray-700">{task.requesterName}</TableCell>
+                    <TableCell className="text-xs text-gray-600 whitespace-nowrap">
                       {task.dueAt ? (
                         <div className="flex items-center gap-1.5">
-                          <Clock className={`w-3.5 h-3.5 ${task.isOverdue ? 'text-rose-500' : 'text-gray-400'}`} />
+                          <Clock className={`w-3.5 h-3.5 flex-shrink-0 ${task.isOverdue ? 'text-rose-500' : 'text-gray-400'}`} />
                           <span className={task.isOverdue ? 'text-rose-600 font-semibold' : ''}>
                             {formatDateTime(task.dueAt)}
                           </span>
@@ -112,10 +114,10 @@ export const TaskInboxPage: React.FC = () => {
                         '—'
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center whitespace-nowrap">
                       <Badge color={meta.color}>{meta.label}</Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <Link to={`/inbox/${task.id}`}>
                         <Button variant="outline" size="sm">
                           Xử lý
