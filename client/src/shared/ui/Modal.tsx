@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -43,11 +44,11 @@ export const Modal: React.FC<ModalProps> = ({
     '2xl': 'max-w-2xl',
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div
         className={cn(
-          'w-full bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transform transition-all',
+          'w-full bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transform transition-all',
           maxWidths[maxWidth]
         )}
       >
@@ -65,6 +66,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
         <div className="p-6">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

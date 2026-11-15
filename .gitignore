@@ -27,3 +27,9 @@ server/target/
 .project
 .settings/
 .classpath
+
+# Test outputs
+playwright-report/
+client/playwright-report/
+test-results/
+client/test-results/
