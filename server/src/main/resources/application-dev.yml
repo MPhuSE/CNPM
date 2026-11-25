@@ -2,6 +2,15 @@ spring:
   jpa:
     show-sql: true
 
+flowops:
+  jwt:
+    secret: ${FLOWOPS_JWT_SECRET:4c9b20b784a9231f822bca6df9d1b091f0a51c4a259c6c73919da2185c6df9b1}
+  cors:
+    allowed-origins: ${FLOWOPS_CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:8080}
+  auth:
+    cookie:
+      secure: ${FLOWOPS_COOKIE_SECURE:false}
+
 logging:
   level:
     com.flowops: DEBUG

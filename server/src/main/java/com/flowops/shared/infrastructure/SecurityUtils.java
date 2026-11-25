@@ -11,10 +11,17 @@ public final class SecurityUtils {
 
     public static Optional<Long> getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof Long userId) {
-            return Optional.of(userId);
+        if (auth != null && auth.isAuthenticated()) {
+            if (auth.getPrincipal() instanceof SessionPrincipal principal) return Optional.of(principal.userId());
+            if (auth.getPrincipal() instanceof Long userId) return Optional.of(userId);
         }
         return Optional.empty();
+    }
+
+    public static SessionPrincipal getRequiredSessionPrincipal() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof SessionPrincipal principal) return principal;
+        throw new org.springframework.security.authentication.InsufficientAuthenticationException("Phiên không hợp lệ");
     }
 
     public static Long getRequiredCurrentUserId() {

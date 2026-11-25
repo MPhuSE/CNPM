@@ -31,11 +31,20 @@ spring:
 
 flowops:
   jwt:
-    secret: ${FLOWOPS_JWT_SECRET:4c9b20b784a9231f822bca6df9d1b091f0a51c4a259c6c73919da2185c6df9b1}
+    secret: ${FLOWOPS_JWT_SECRET}
     access-token-expiration-ms: 900000 # 15 minutes
     refresh-token-expiration-ms: 604800000 # 7 days
   cors:
-    allowed-origins: ${FLOWOPS_CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+    allowed-origins: ${FLOWOPS_CORS_ORIGINS}
+  auth:
+    bcrypt-strength: ${FLOWOPS_BCRYPT_STRENGTH:12}
+    cookie:
+      secure: ${FLOWOPS_COOKIE_SECURE:true}
+    rate-limit:
+      account-failures: ${FLOWOPS_LOGIN_ACCOUNT_LIMIT:5}
+      ip-attempts: ${FLOWOPS_LOGIN_IP_LIMIT:30}
+      window-seconds: ${FLOWOPS_LOGIN_WINDOW_SECONDS:900}
+      max-entries: ${FLOWOPS_LOGIN_MAX_ENTRIES:10000}
   scheduler:
     sla-check-enabled: true
     cron: "0 * * * * *" # Every minute
