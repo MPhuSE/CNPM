@@ -1,12 +1,13 @@
 package com.flowops.identity.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class LoginRequest {
     @NotBlank(message = "Tên đăng nhập không được để trống")
     private String username;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
+    @NotNull(message = "Mật khẩu không được để trống")
     private String password;
 
     public LoginRequest() {}

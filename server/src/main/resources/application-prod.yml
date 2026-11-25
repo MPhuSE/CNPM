@@ -6,3 +6,8 @@ logging:
   level:
     com.flowops: INFO
     org.springframework.security: WARN
+
+flowops:
+  auth:
+    cookie:
+      secure: true

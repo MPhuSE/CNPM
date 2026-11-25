@@ -79,7 +79,7 @@ docker compose up -d
 
 ```bash
 cd server
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 * Backend chạy tại: `http://localhost:8080`
@@ -107,5 +107,14 @@ npm run dev
 | `manager_alice` | `approver123` | `ROLE_EMPLOYEE`, `ROLE_APPROVER` | Quản lý trực tiếp |
 | `finance_bob` | `approver123` | `ROLE_APPROVER` | Ban Tài chính / Kế toán |
 | `it_charlie` | `approver123` | `ROLE_APPROVER` | Đội IT Support |
+
+## SCRUM-75 — auth session runbook (partial)
+
+- Browser auth commands (`POST /api/v1/auth/login|refresh|logout|password`) require an exact allowed `Origin` and `X-FlowOps-CSRF: 1`. The refresh secret is only in the `flowops_refresh` cookie (HttpOnly, SameSite=Lax, host-only, path `/api/v1/auth`); access token stays in frontend memory. Business APIs authenticate only the Bearer token.
+- Login returns `accessToken` and `user`; refresh returns `accessToken`. Logout and password change return 204. `/api/v1/me` retains the current user JSON. See [partial auth OpenAPI](docs/openapi.yaml) and [auth decisions](docs/decisions.md).
+- Development profile uses localhost CORS and an explicitly development-only signing key. For production set `SPRING_PROFILES_ACTIVE=prod`, a private `FLOWOPS_JWT_SECRET` of at least 32 bytes, exact `FLOWOPS_CORS_ORIGINS`, HTTPS, and `FLOWOPS_COOKIE_SECURE=true`. The base configuration has no JWT secret or CORS fallback. Session TTL is `flowops.jwt.refresh-token-expiration-ms` (default 7 days); access TTL is 15 minutes and is capped at session expiry.
+- Provisional TBD09 values: BCrypt strength 12, 5 failed logins per username and 30 total attempts per remote IP per 15 minutes, configurable by `FLOWOPS_BCRYPT_STRENGTH`, `FLOWOPS_LOGIN_ACCOUNT_LIMIT`, `FLOWOPS_LOGIN_IP_LIMIT`, `FLOWOPS_LOGIN_WINDOW_SECONDS`, `FLOWOPS_LOGIN_MAX_ENTRIES`. IP uses the servlet remote address without trusting `X-Forwarded-For`. Counters are bounded process-local memory; restart resets them and instances do not share state.
+- Run backend tests with `cd server && ./mvnw verify` (Windows: `mvnw.cmd verify`). The wrapper pins Maven 3.9.14. On Docker Desktop 29 in this environment, use `DOCKER_HOST=unix://$HOME/.docker/run/docker.sock ./mvnw verify -Dapi.version=1.44` for Testcontainers. Auth integration tests use a container-only shim for missing baseline `lock_version` columns. This does **not** repair the production schema.
+- Known baseline issues outside SCRUM-75: V1 lacks `lock_version` on `departments` and `approval_groups`, so Hibernate validation fails on a fresh database. V7's demo BCrypt hash does not match the passwords documented above; those Leader-added credentials are not an auth acceptance criterion. Existing migrations were not rewritten. Auth tests use an isolated short legacy password fixture; Owner decides schema and demo seed corrections separately before deployment.
 
 # CNPM
