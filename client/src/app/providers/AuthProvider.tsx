@@ -10,6 +10,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (credentials: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   hasRole: (role: RoleCode) => boolean;
 }
 
@@ -21,10 +22,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Check initial session
+    const logoutEpoch = tokenStorage.getLogoutEpoch();
     authApi
       .getCurrentUser()
-      .then((u) => setUser(u))
-      .catch(() => setUser(null))
+      .then((u) => { if (tokenStorage.getLogoutEpoch() === logoutEpoch) setUser(u); })
+      .catch(() => { if (tokenStorage.getLogoutEpoch() === logoutEpoch) setUser(null); })
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -35,8 +37,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    await authApi.logout();
-    tokenStorage.setToken(null);
+    try {
+      await authApi.logout();
+    } finally {
+      tokenStorage.setToken(null);
+      setUser(null);
+      queryClient.clear();
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    await authApi.changePassword(currentPassword, newPassword);
     setUser(null);
     queryClient.clear();
   };
@@ -53,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         logout,
+        changePassword,
         hasRole,
       }}
     >
