@@ -4,7 +4,10 @@ import com.flowops.shared.domain.BusinessRuleException;
 import com.flowops.shared.domain.ConcurrencyConflictException;
 import com.flowops.shared.domain.EntityNotFoundException;
 import com.flowops.shared.domain.ForbiddenActionException;
+import com.flowops.identity.application.RateLimitException;
+import com.flowops.identity.application.PasswordPolicyException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -20,6 +23,19 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ErrorResponseDto> handleRateLimit(RateLimitException ex) {
+        return ResponseEntity.status(429).header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+                .body(ErrorResponseDto.builder().code("RATE_LIMITED").message(ex.getMessage())
+                        .traceId(UUID.randomUUID().toString()).build());
+    }
+
+    @ExceptionHandler(PasswordPolicyException.class)
+    public ResponseEntity<ErrorResponseDto> handleBadInput(PasswordPolicyException ex) {
+        return ResponseEntity.badRequest().body(ErrorResponseDto.builder().code("INVALID_INPUT")
+                .message("Dữ liệu đầu vào không hợp lệ").traceId(UUID.randomUUID().toString()).build());
+    }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleNotFound(EntityNotFoundException ex) {
